@@ -13,6 +13,7 @@ Closes #
 ## Preview
 
 After `CI Build` is green, comment `/deploy staging` on this pull request to deploy the preview on the
-self-hosted runner. If the change touches `scripts/deploy.sh`, `.env.production` or `.github/workflows/`,
-also comment `/deploy production` once: the job pulls the production settings from `todo-app-infra`
-(release app) and runs the deploy script with them, so the real values go through your change before merge.
+self-hosted runner. The job signs in as the release app, pulls the deploy settings from `todo-app-infra`
+and runs `scripts/deploy.sh` with them, so the real values go through your change before merge.
+If the change touches `scripts/deploy.sh`, `.env.production` or `.github/workflows/`, also comment
+`/deploy production` once: same build and settings, and the release shows up on the dashboard.

@@ -34,12 +34,13 @@ jobs:
           COMMENT="${{ github.event.comment.body }}"
           echo "Comment received: $COMMENT"
 
-      # Production settings (S3 bucket, CloudFront, registry token) live in todo-app-infra. The release app
-      # (RELEASE_APP_ID / RELEASE_APP_PRIVATE_KEY, see docs/DEPLOY.md) can read that repo, so a production
-      # deploy and a manual run pull them in here. Staging previews only need the .env.production in this repo.
+      # Deploy settings (S3 bucket, CloudFront, registry token) live in todo-app-infra. The release app
+      # (RELEASE_APP_ID / RELEASE_APP_PRIVATE_KEY, see docs/DEPLOY.md) can read that repo, so every /deploy from
+      # a comment and a manual run pull them in here first. Staging previews used to rely on the defaults in
+      # .env.production, which drifted from the real values twice; now both environments go through the same path.
       - name: Get release app token
         id: release-app
-        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/deploy production'))
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/deploy'))
         # the token call times out now and then on the runner; the deploy still runs without the infra settings
         continue-on-error: true
         uses: actions/create-github-app-token@v2
@@ -83,8 +84,9 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           INTERNAL_API_KEY: ${{ secrets.INTERNAL_API_KEY }}
 
-      # Previews are served from the same host as the internal API (see .env.production). A production
-      # preview is the same build deployed with the settings pulled from todo-app-infra above.
+      # Previews are served from the same host as the internal API (see .env.production). Staging and production
+      # are the same build deployed with the settings pulled from todo-app-infra above; production also records
+      # the release on the dashboard (scripts/deploy.sh).
       - name: Post preview link
         if: github.event_name == 'issue_comment' && startsWith(github.event.comment.body, '/deploy')
         run: |
@@ -93,10 +95,15 @@ jobs:
           HOST=$(sed -n 's#^INTERNAL_API_BASE=https://\([^/]*\)/.*#\1#p' .env.production)
           PREVIEW="https://${HOST}/preview/todo-app/pr-${{ github.event.issue.number }}/"
           echo "Preview: $PREVIEW"
-          if [[ "$ENVIRONMENT" == "production" ]]; then
-            NOTE="This run pulled the production settings from todo-app-infra (release app) before scripts/deploy.sh ran."
+          if [[ "${{ steps.release-app.outcome }}" == "success" ]]; then
+            NOTE="Deployed with the settings pulled from todo-app-infra (release app)."
           else
-            NOTE="To check the same build against the production settings, comment /deploy production: the job signs in as the release app, pulls them from todo-app-infra and runs scripts/deploy.sh with them."
+            NOTE="The release app token call failed, so this run used the defaults from .env.production."
+          fi
+          if [[ "$ENVIRONMENT" == "production" ]]; then
+            NOTE="$NOTE The release is recorded on the dashboard."
+          else
+            NOTE="$NOTE Comment /deploy production to run the same build as a release and record it on the dashboard."
           fi
           curl -fsS -X POST \
             -H "Authorization: Bearer $GITHUB_TOKEN" \
