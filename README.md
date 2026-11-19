@@ -15,7 +15,7 @@ A simple React-based Todo application.
 - Move a task up or down with the arrow buttons (or `k` / `j` on a focused task)
 - Complete all visible tasks at once, or mark them all active again (tasks hidden by a filter or search are left alone)
 - Clear all completed tasks at once
-- Filter the list by all / active / completed
+- Filter the list by all / active / completed; each tab shows how many tasks it holds
 - Search the list by text (case-insensitive, applied on top of the active filter)
 - The filter and search text are kept in the URL hash, so a link like `#/active?q=deploy` opens the list in that state and a reload keeps it
 - See how many tasks are still open, in the list and in the browser tab title
