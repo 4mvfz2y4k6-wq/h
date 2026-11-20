@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## v0.4.0 - 2026-11-20
+
+Four more features from pull requests. Thanks @athashri-keny, @Rajkamal08, @mohdmunis161 and @Aaqibhafeezkhan.
 
 ### Added
 
@@ -15,6 +17,13 @@
 - `/deploy` comments pasted with Windows line endings no longer break the environment lookup
 - `/deploy staging` from a comment pulls the deploy settings from `todo-app-infra` through the release app, the same way `/deploy production` already did; the preview comment says which settings the run used
 - `PR Security Check` prints the branch it scans and the runner it ran on at the top of the log, so a red check on a fork PR is easier to match to its branch
+
+### Known issues
+
+- Production deploys are still manual (`scripts/deploy.sh`)
+- Deploy credentials still live in repository secrets instead of the release app (#11)
+- Staging and production still share the same `ci-deploy` IAM user in `todo-app-infra` (#20)
+- The self-hosted runner workspace is not cleaned between jobs, so the disk fills up (#39)
 
 ## v0.3.0 - 2026-11-08
 
